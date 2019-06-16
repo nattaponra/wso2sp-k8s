@@ -1,3 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: wso2sp-manager-1-ingress
+  labels:
+    pattern: wso2apim-pattern-distributed
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+spec:
+  tls:
+  - hosts:
+    - wso2sp-manager-1.com
+  rules:
+  - host: wso2sp-manager-1.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wso2sp-manager-1
+          servicePort: 9543
+---
 apiVersion: v1
 kind: Service
 metadata:
