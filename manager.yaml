@@ -1,35 +1,117 @@
-apiVersion: apps/v1
+apiVersion: v1
+kind: Service
+metadata:
+  name: wso2sp-manager-1
+  labels:
+    node: wso2sp-manager-1
+    pattern: wso2sp-pattern-distributed
+spec:
+  ports:
+    # ports that this service should serve on
+    -
+      name: 'http-port-1'
+      port: 9090
+      protocol: TCP
+    -
+      name: 'https-port-1'
+      port: 9543
+      protocol: TCP
+
+  # label keys and values that must match in order to receive traffic for this service
+  selector:
+    node: wso2sp-manager-1
+    pattern: wso2sp-pattern-distributed
+  clusterIP: None
+---
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: sp-manager
+  name: wso2sp-manager-1
+  labels:
+    app: wso2sp-manager
+    node: wso2sp-manager-1
+    pattern: wso2sp-pattern-distributed
 spec:
-  selector:
-    matchLabels:
-      app: sp-manager
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
-        app: sp-manager
+        app: wso2sp-manager
+        node: wso2sp-manager-1
+        pattern: wso2sp-pattern-distributed
     spec:
       containers:
-      - name: sp-manager
-        image: wso2/wso2sp-manager:4.4.0
+      - image: wso2/wso2sp-manager:4.4.0
+        name: wso2sp-manager-1
+        imagePullPolicy: Always
+        securityContext:
+          runAsUser: 802
         resources:
           limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 9543
+            memory: "2Gi"
+          requests:
+            memory: "1Gi"
+        command: ['sh', '-c', sleep 40 && /home/wso2carbon/init.sh]
         env:
-          - name: NODE_ID
-            value: "wso2sp-manager"
-          - name: NODE_IP
-            value: 0.0.0.0
+        -
+          name: WSO2_SERVER_PROFILE
+          value: "manager"
+        -
+          name: OFFSET
+          value: "0"
+        -
+          name: NODE_ID
+          value: "wso2sp-manager-1"
+        -
+          name: NODE_PORT
+          value: "9543"
+        -
+           name: NODE_IP
+           valueFrom:
+             fieldRef:
+               fieldPath: status.podIP
 
+        ports:
+        -
+          containerPort: 9090
+          protocol: "TCP"
+        -
+          containerPort: 9543
+          protocol: "TCP"
+        -
+          containerPort: 9711
+          protocol: "TCP"
+        -
+          containerPort: 9611
+          protocol: "TCP"
+        -
+          containerPort: 7711
+          protocol: "TCP"
+        -
+          containerPort: 7611
+          protocol: "TCP"
 
         volumeMounts:
-          - 
-
-              volumes:
-      - "./manager/conf:/home/wso2carbon/wso2-config-volume/conf"
-      - "./manager/siddhi-files:/home/wso2carbon/wso2sp-4.4.0/wso2/manager/deployment/siddhi-files"
+        - name: sp-manager-conf
+          mountPath: "/home/wso2carbon/wso2-config-volume/conf/manager/"
+        - name: sp-manager-bin
+          mountPath: "/home/wso2carbon/kubernetes-volumes/manager/bin/"
+        - name: sp-mgt-storage-volume
+          mountPath: "/home/wso2carbon/wso2sp-4.4.0/deployment/siddhi-files/"
+        livenessProbe:
+          tcpSocket:
+            port: 9543
+          initialDelaySeconds: 70
+          periodSeconds: 20
+      volumes:
+      - name: sp-manager-conf
+        configMap:
+          name: sp-manager-conf
+      - name: sp-manager-bin
+        configMap:
+          name: sp-manager-bin
+      - name: sp-mgt-storage-volume
+        persistentVolumeClaim:
+          claimName: sp-mgt-volume-claim
+      # serviceAccountName: "wso2svcacct"

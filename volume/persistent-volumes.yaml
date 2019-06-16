@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sp-manager-siddhi-files-pv
+  annotations:
+      volume.beta.kubernetes.io/storage-class: ""
+  labels:
+    type: local
+    purpose: sp_mgt_deployment_dir
+    pattern: wso2sp-pattern-distributed
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/ifra-volume/steam-data"
+  # nfs:
+  #   server: "<NFS-Server-IP>"
+  #   path: "<NFS_LOCATION_PATH>"
