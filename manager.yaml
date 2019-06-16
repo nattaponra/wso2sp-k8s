@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sp-manager
+spec:
+  selector:
+    matchLabels:
+      app: sp-manager
+  template:
+    metadata:
+      labels:
+        app: sp-manager
+    spec:
+      containers:
+      - name: sp-manager
+        image: wso2/wso2sp-manager:4.4.0
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 9543
+        env:
+          - name: NODE_ID
+            value: "wso2sp-manager"
+          - name: NODE_IP
+            value: 0.0.0.0
+
+
+        volumeMounts:
+          - 
+
+              volumes:
+      - "./manager/conf:/home/wso2carbon/wso2-config-volume/conf"
+      - "./manager/siddhi-files:/home/wso2carbon/wso2sp-4.4.0/wso2/manager/deployment/siddhi-files"
