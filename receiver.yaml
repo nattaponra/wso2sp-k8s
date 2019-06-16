@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: wso2sp-worker
+  name: wso2sp-receiver
   labels:
-    node: wso2sp-worker
+    node: wso2sp-receiver
     pattern: wso2sp-pattern-distributed
 spec:
   ports:
@@ -14,34 +14,26 @@ spec:
       protocol: TCP
     -
       name: 'https-port-1'
-      port: 9543
+      port: 9444
       protocol: TCP
     -
       name: 'https-port-2'
       port: 9544
       protocol: TCP
-    -
-      name: 'https-port-3'
-      port: 7070
-      protocol: TCP
-    -
-      name: 'https-port-4'
-      port: 7443
-      protocol: TCP
 
   # label keys and values that must match in order to receive traffic for this service
   selector:
-    node: wso2sp-worker
+    node: wso2sp-receiver
     pattern: wso2sp-pattern-distributed
   clusterIP: None
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: wso2sp-worker
+  name: wso2sp-receiver
   labels:
-    app: wso2sp-worker
-    node: wso2sp-worker
+    app: wso2sp-receiver
+    node: wso2sp-receiver
     pattern: wso2sp-pattern-distributed
 spec:
   strategy:
@@ -50,46 +42,46 @@ spec:
   template:
     metadata:
       labels:
-        app: wso2sp-worker
-        node: wso2sp-worker
+        app: wso2sp-receiver
+        node: wso2sp-receiver
         pattern: wso2sp-pattern-distributed
     spec:
       containers:
       -
         image: wso2/wso2sp-worker:4.4.0
-        name: wso2sp-worker
+        name: wso2sp-receiver
         imagePullPolicy: Always
         # resources:
         #   limits:
         #     memory: "2Gi"
         #   requests:
         #     memory: "1Gi"
-        command: ['sh', '-c', sleep 40 && /home/wso2carbon/init.sh]
+        command: ['sh', '-c', sleep 20 && /home/wso2carbon/init.sh]
         env:
         -
           name: WSO2_SERVER_PROFILE
           value: "worker"
         -
           name: OFFSET
-          value: "0"
-        -
-          name: RECEIVER_NODE
-          value: "false"
+          value: "1"
         -
           name: NODE_IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
         -
+          name: RECEIVER_NODE
+          value: "true"
+        -
           name: NODE_PORT
-          value: "9443"
+          value: "9444"
 
         ports:
         -
           containerPort: 9090
           protocol: "TCP"
         -
-          containerPort: 9443
+          containerPort: 9444
           protocol: "TCP"
         -
           containerPort: 9543
@@ -122,10 +114,9 @@ spec:
           mountPath: "/home/wso2carbon/kubernetes-volumes/worker/bin/"
         livenessProbe:
           tcpSocket:
-            port: 9443
+            port: 9444
           initialDelaySeconds: 70
           periodSeconds: 20
-      # serviceAccountName: "wso2svcacct"
       volumes:
       - name: sp-worker-conf
         configMap:

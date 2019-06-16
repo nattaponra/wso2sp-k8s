@@ -15,7 +15,28 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: "/ifra-volume/steam-data"
+    path: "/ifra-volume/stream-data"
+  # nfs:
+  #   server: "<NFS-Server-IP>"
+  #   path: "<NFS_LOCATION_PATH>"
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sp-mysql-pv
+  labels:
+    type: local
+    purpose: sp-rdbms-data
+    pattern: wso2sp-pattern-distributed
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/ifra-volume/mysql-data"
   # nfs:
   #   server: "<NFS-Server-IP>"
   #   path: "<NFS_LOCATION_PATH>"
